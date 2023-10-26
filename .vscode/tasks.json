@@ -1,0 +1,30 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "nasm",
+            "type": "shell",
+            "command": "nasm -f bin \"${file}\" -o \"${fileDirname}/${fileBasenameNoExtension}.bin\"",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "floppy",
+            "type": "shell",
+            "dependsOn": "nasm",
+            "command": "truncate -s 1474560 \"${fileDirname}/${fileBasenameNoExtension}.bin\" && mv \"${fileDirname}/${fileBasenameNoExtension}.bin\" \"${fileDirname}/${fileBasenameNoExtension}.flp\"",
+            "group": {
+                "kind": "build"
+            }
+        },
+        {
+            "label": "qemu",
+            "type": "shell",
+            "dependsOn": "floppy",
+            "command": "qemu-system-x86_64 -drive file=\"${fileDirname}/${fileBasenameNoExtension}.flp\",format=raw,index=0,if=floppy",
+            "problemMatcher": []
+        }
+    ]
+}
