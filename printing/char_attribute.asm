@@ -2,9 +2,10 @@ BITS 16
 ORG 0x7c00
 
 start:
-    mov ah, 0x0A
+    mov ah, 0x09
     mov al, 'A'
-    mov cx, 10; count
+    mov bl, 9; purple color
+    mov cx, 2; 2 times
     int 0x10
 
 times 510-($-$$) db 0
