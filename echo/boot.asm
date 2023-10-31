@@ -1,8 +1,8 @@
 BITS 16
 ORG 7c00H
 
-%define BACKSPACE 0x0E
-%define ENTER 0x1C
+%define BACKSPACE 0x08
+%define ENTER 0x0D
 
 cursor_coords:
 cursor_x db 0
@@ -10,6 +10,35 @@ cursor_y db 0
 
 buffer:
 resb 64
+
+start:
+    call clear_screen; clear the screen
+    mov cx, 0; will be used as character counter
+    mov bx, buffer; will be used as buffer pointer
+
+    ; read a character from the keyboard
+    read_char:
+    mov ah, 0
+    int 16h
+
+    cmp al, BACKSPACE; if the character is backspace
+    je .call_handle_backspace; jump to handle_backspace
+    cmp al, ENTER; if the character is enter
+    je .call_handle_enter; jump to handle_enter
+    jmp .call_handle_symbol; jump to handle_symbol
+
+
+    .call_handle_backspace:
+    call handle_symbol; handle the character
+    jmp read_char; read another character
+
+    .call_handle_enter:
+    call handle_enter; handle the enter character
+    jmp read_char; read another character
+
+    .call_handle_symbol:
+    call handle_symbol; handle the character
+    jmp read_char; read another character
 
 clear_screen:
     mov ah, 0; set the video mode
@@ -51,35 +80,6 @@ handle_backspace:
 
 handle_enter:
     ret
-
-start:
-    call clear_screen; clear the screen
-    mov cx, 0; will be used as character counter
-    mov bx, buffer; will be used as buffer pointer
-
-    ; read a character from the keyboard
-    read_char:
-    mov ah, 0
-    int 16h
-
-    cmp al, BACKSPACE; if the character is backspace
-    je .call_handle_backspace; jump to handle_backspace
-    cmp al, ENTER; if the character is enter
-    je .call_handle_enter; jump to handle_enter
-    jmp .call_handle_symbol; jump to handle_symbol
-
-
-    .call_handle_backspace:
-    call handle_symbol; handle the character
-    jmp read_char; read another character
-
-    .call_handle_enter:
-    call handle_enter; handle the enter character
-    jmp read_char; read another character
-
-    .call_handle_symbol:
-    call handle_symbol; handle the character
-    jmp read_char; read another character
 
 times 510-($-$$) db 0
 db 0x55, 0xAA
