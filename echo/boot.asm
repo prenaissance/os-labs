@@ -3,7 +3,6 @@ ORG 7c00H
 
 %define BACKSPACE 0x08
 %define ENTER 0x0D
-%define ESC 0x1B
 
 cursor_coords:
 cursor_x db 0
@@ -27,7 +26,7 @@ start:
     mov ah, 0
     int 16h
 
-    cmp al, ESC; if the character is backspace
+    cmp al, BACKSPACE; if the character is backspace
     je .call_handle_backspace; jump to handle_backspace
     cmp al, ENTER; if the character is enter
     je .call_handle_enter; jump to handle_enter
@@ -35,7 +34,7 @@ start:
 
 
     .call_handle_backspace:
-    call handle_symbol; handle the character
+    call handle_backspace; handle the character
     jmp read_char; read another character
 
     .call_handle_enter:
