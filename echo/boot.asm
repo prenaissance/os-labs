@@ -4,15 +4,6 @@ ORG 7c00H
 %define BACKSPACE 0x08
 %define ENTER 0x0D
 
-cursor_coords:
-cursor_x db 0
-cursor_y db 0
-
-row db 1
-
-buffer:
-resb 63
-
 start:
     mov ah, 0; set the video mode
     mov al, 3; 80x25 text mode
@@ -95,6 +86,7 @@ handle_enter:
 
     mov byte [cursor_x], 0; set the cursor x coordinate to 0
     inc byte [row]; increment the row number
+    inc byte [cursor_y]; increment the cursor y coordinate
     mov bx, buffer; set the buffer pointer to the beginning of the buffer
     xor cx, cx; set the character counter to 0
     pusha; save all registers
@@ -111,6 +103,15 @@ handle_enter:
     int 10h
     popa; restore all registers
     ret
+
+cursor_coords:
+cursor_x db 0
+cursor_y db 0
+
+row db 0
+
+buffer:
+resb 256
 
 times 510-($-$$) db 0
 db 0x55, 0xAA
