@@ -1,5 +1,7 @@
 BITS 16
 ORG 7c00H
+;; my sector: 91
+;; CHS format: Cylinder: 5, Head: 0, Sector: 2
 
 start:
     mov [BOOT_DISK], dl; save boot disk number

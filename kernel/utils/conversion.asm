@@ -1,4 +1,5 @@
 result dw 0
+
 ;; Converts string to uint
 ;; Parameters: si - string to convert
 ;; Returns:    ax - converted int
@@ -65,3 +66,34 @@ int_to_string:
     mov byte [di], 0
     popa
     ret
+
+
+string_to_hex:
+    atoh_conv_loop:
+        cmp     byte [si], 0
+        je      atoh_conv_done
+
+        xor     ax, ax
+        mov     al, [si]
+        cmp     al, 65
+        jl      conv_digit  
+
+        conv_letter:
+            sub     al, 55
+            jmp     atoh_finish_iteration
+
+        conv_digit:
+            sub     al, 48
+
+        atoh_finish_iteration:
+            mov     bx, [di]
+            imul    bx, 16
+            add     bx, ax
+            mov     [di], bx
+
+            inc     si
+
+        jmp     atoh_conv_loop
+
+    atoh_conv_done:
+        ret
