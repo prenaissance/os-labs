@@ -1,18 +1,22 @@
 #!/bin/bash
 
-bootloader="boot.asm"
+boot="boot.asm"
+bootloader="boot2.asm"
 kernel="kernel.asm"
 
-filename1=$(basename "$bootloader" | cut -d. -f1)
-filename2=$(basename "$kernel" | cut -d. -f1)
+boot_filename=$(basename "$boot" | cut -d. -f1)
+bootloader_filename=$(basename "$bootloader" | cut -d. -f1)
+kernel_filename=$(basename "$kernel" | cut -d. -f1)
 
-nasm -f bin -o "boot.flp" "$filename1.asm"
-nasm -f bin -o "$filename2.bin" "$filename2.asm"
+nasm -f bin -o "boot.flp" "$boot_filename.asm"
+nasm -f bin -o "$bootloader_filename.bin" "$bootloader_filename.asm"
+nasm -f bin -o "$kernel_filename.bin" "$kernel_filename.asm"
 
 truncate -s 1474560 "boot.flp"
+dd conv=notrunc if="$bootloader_filename.bin" of="boot.flp" bs=512 seek=1
 echo "Writing kernel at sector 91"
-dd conv=notrunc if="$filename2.bin" of="boot.flp" bs=512 seek=91
+dd conv=notrunc if="$kernel_filename.bin" of="boot.flp" bs=512 seek=91
 
-rm $filename2.bin
+rm $kernel_filename.bin
 
 echo "File: 'boot.flp' is compiled"

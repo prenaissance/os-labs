@@ -68,7 +68,14 @@ section .text
 
 main:
     mov [BOOT_DISK], dl
+    call insert_initial_floppy_data
     call menu
+    ; mov si, floppy_buffer
+    ; mov bh, 0
+    ; mov bl, 07H
+    ; mov dh, 0
+    ; mov dl, 0
+    ; call print_string
     jmp $
 
 clear_screen:
@@ -114,11 +121,11 @@ menu:
     .menu_handle_enter:
         ;; not yet implemented
         cmp byte [menu_selection], 0
-        ; je keyboard_to_floppy
+        je keyboard_to_floppy
         cmp byte [menu_selection], 1
-        ; je menu_handle_floppy_ram
+        je menu_handle_floppy_ram
         cmp byte [menu_selection], 2
-        ; je ram_to_floppy
+        je ram_to_floppy
         jmp .menu_read_char; read another character
 
 print_menu:
@@ -154,4 +161,8 @@ print_menu:
 %include "utils/string/common.asm"
 %include "utils/conversion.asm"
 %include "utils/io.asm"
+%include "tasks/initial_floppy_data.asm"
+%include "tasks/keyboard_to_floppy.asm"
+%include "tasks/floppy_to_ram.asm"
+%include "tasks/ram_to_floppy.asm"
 ; %include "lab3/utils/conversion.asm"
