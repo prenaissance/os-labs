@@ -37,12 +37,11 @@ section .data
     ARRAY_LENGTH_PROMPT db "Enter array length: ", 0
     ARRAY_ELEMENT_PROMPT db "Enter element: ", 0
 
-    ORIGINAL_ARRAY_MSG db "Original array: ", 0
-    SORTED_ARRAY_MSG db "Sorted array: ", 0
+    PRINT_ARRAY_MSG db "Array: ", 0
     RETURN_BOOTLOADER_MSG db "Press Enter to return to the bootloader", 0
 
     OPTION_ONE db "1. Enter kernel", 0
-    OPTION_TWO db "2. Sort array", 0
+    OPTION_TWO db "2. Print array", 0
     ARRAY_SEPARATOR db ", ", 0
     ARRAY_BEGIN db "[", 0
     ARRAY_END db "]", 0
@@ -203,22 +202,14 @@ handle_sort:
     loop .prompt_element_loop
 
     mov bl, 0x0F
-    mov si, ORIGINAL_ARRAY_MSG
+    mov si, PRINT_ARRAY_MSG
     call print_string_inline
     ;; restore array count
     pop cx
     push cx
     call print_array
 
-    mov si, SORTED_ARRAY_MSG
-    mov dx, 0300H
-    call print_string_and_move
-    pop cx
-    call bubble_sort
-    call print_array
-    jmp $
-
-    mov dx, 0700H
+    mov dx, 0400H
     mov bh, 0
     mov bl, 0x0F
     mov si, RETURN_BOOTLOADER_MSG
