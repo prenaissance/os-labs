@@ -34,9 +34,22 @@ section .data
     SECTOR_PROMPT db "Enter sector: ", 0
     RAM_ADDRESS_PROMPT db "Enter RAM address: ", 0
     RAM_OFFSET_PROMPT db "Enter RAM offset: ", 0
+    ARRAY_LENGTH_PROMPT db "Enter array length: ", 0
+    ARRAY_ELEMENT_PROMPT db "Enter element: ", 0
+
+    ORIGINAL_ARRAY_MSG db "Original array: ", 0
+    SORTED_ARRAY_MSG db "Sorted array: ", 0
+    RETURN_BOOTLOADER_MSG db "Press Enter to return to the bootloader", 0
+
+    OPTION_ONE db "1. Enter kernel", 0
+    OPTION_TWO db "2. Sort array", 0
+    ARRAY_SEPARATOR db ", ", 0
+    ARRAY_BEGIN db "[", 0
+    ARRAY_END db "]", 0
 
 section .bss
     buffer resb 257
+    array_buffer resw 16
     floppy_buffer resb 512
     conversion_buffer resb 32
     hex_conversion_buffer resb 64 
@@ -44,7 +57,6 @@ section .bss
         ram_address_value resw 1
         ram_offset resw 1
     three resb 2
-    ram_buffer resb 512
 
 section .text
     global main
@@ -52,6 +64,7 @@ section .text
 main:
     ;; save boot disk
     mov byte [BOOT_DISK], dl
+    .main_jmp:
     call clear_screen
 
     call prompt_chs
@@ -62,9 +75,22 @@ main:
     ; mov byte [sector], 2
     ; mov word [ram_address_value], 7F00H
     ; mov word [ram_offset], 7F00H
-    jmp copy_kernel_to_ram
+    call copy_kernel_to_ram
+    call print_floppy_result
+    call print_menu
 
-    jmp $ ; infinite loop
+    .read_option:
+        mov ah, 0
+        int 16H
+
+        cmp al, '1'
+        je handle_kernel
+
+        cmp al, '2'
+        je handle_sort
+
+        jmp .read_option
+    jmp $ ; will not reach here
 
 clear_screen:
     mov ah, 0; set the video mode
@@ -133,26 +159,16 @@ prompt_ram_address:
     call clear_current_row
     ret
 
-;; Notes: the global variables with chs and ram address are used
-copy_kernel_to_ram:
-    ;; copy from floppy to ram
-    ;; setup es:bx to point to the ram address
-    mov dl, [BOOT_DISK]
-    mov ch, [cylinder]
-    mov dh, [head]
-    mov cl, [sector]
+print_menu:
+    mov dx, 0000H
+    mov si, OPTION_ONE
+    call print_string
+    mov dx, 0100H
+    mov si, OPTION_TWO
+    call print_string
+    ret
 
-    mov bx, [ram_address_value]
-    mov ax, [ram_offset]
-    mov es, ax
-
-    mov ah, 0x02 ; read sectors code
-    mov al, 6
-    int 13h
-
-    ;; check for errors
-    call print_floppy_result
-
+handle_kernel:
     mov dl, [BOOT_DISK]
     mov ax, [ram_address_value]
     mov bx, [ram_offset]
@@ -162,25 +178,92 @@ copy_kernel_to_ram:
     mov sp, bx
     jmp ax
 
-print_floppy_result:
+handle_sort:
+    call clear_screen
+    mov si, ARRAY_LENGTH_PROMPT
+    mov di, buffer
+    call prompt
+    mov si, di
+    call string_to_int
+    mov cx, ax
+    push cx; store cx
+    call clear_current_row
+    mov bx, array_buffer
+
+    .prompt_element_loop:
+        mov si, ARRAY_ELEMENT_PROMPT
+        mov di, buffer
+        call prompt
+        mov si, di
+        call string_to_int
+        mov [bx], ax
+        add bx, 2
+        call clear_current_row
+    
+    loop .prompt_element_loop
+
+    mov bl, 0x0F
+    mov si, ORIGINAL_ARRAY_MSG
+    call print_string_inline
+    ;; restore array count
+    pop cx
+    push cx
+    call print_array
+
+    mov si, SORTED_ARRAY_MSG
+    mov dx, 0300H
+    call print_string_and_move
+    pop cx
+    call bubble_sort
+    call print_array
+    jmp $
+
+    mov dx, 0700H
+    mov bh, 0
+    mov bl, 0x0F
+    mov si, RETURN_BOOTLOADER_MSG
+    call print_string
+
+    .sort_wait_enter:
+        mov ah, 0
+        int 16h
+
+        cmp al, ENTER
+        je main.main_jmp
+        jne .sort_wait_enter
+
+;; Notes: the global variables with chs and ram address are used
+copy_kernel_to_ram:
+    ;; copy from floppy to ram
+    ;; setup es:bx to point to the ram address
+    mov dl, [BOOT_DISK]
+    mov ch, [cylinder]
+    mov dh, [head]
+    mov cl, [sector]
+
     push es
-    push bx
-    mov bx, 07c0H
-    mov es, bx
+    mov bx, [ram_address_value]
+    mov ax, [ram_offset]
+    mov es, ax
+
+    mov ah, 0x02 ; read sectors code
+    mov al, 6
+    int 13h
+    pop es
+    ret
+
+print_floppy_result:
     jc .pfr_error
     ;; print success message
     mov si, FLOPPY_SUCCESS_MSG
-    mov dx, 0200H; cursor coordinates
+    mov dx, 0300H; cursor coordinates
     mov bl, 2; green color
     mov bh, 0
     call print_string
-    mov bl, 0x0F; reset color
-    pop bx
-    pop es
-    ret
+    jmp .pfr_end
     .pfr_error:
         mov si, FLOPPY_ERROR_MSG
-        mov dx, 0200H; cursor coordinates
+        mov dx, 0300H; cursor coordinates
         mov bl, 4; red color
         mov bh, 0
         call print_string
@@ -191,11 +274,15 @@ print_floppy_result:
         mov di, conversion_buffer
         call int_to_string
         mov si, conversion_buffer
-        mov dx, 0220H; cursor coordinates
+        mov dx, 0320H; cursor coordinates
         mov bh, 0
         call print_string
-        jmp $
+        jmp .pfr_end
+    .pfr_end:
+        mov bl, 0x0F; reset color
+        ret
 
 %include "utils/string/common.asm"
 %include "utils/conversion.asm"
 %include "utils/io.asm"
+%include "utils/array.asm"

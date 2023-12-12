@@ -31,13 +31,13 @@ string_to_int:
         jmp .string_to_int_loop
     .string_to_int_error:
         popa
-        mov bl, 1
+        ; mov bl, 1 ; removed because of page problems
         mov ax, 0
         ret
     .string_to_int_end:
         mov [result], ax
         popa
-        mov bl, 0
+        ; mov bl, 0 l removed because of page problems
         mov ax, [result]
         ret
 

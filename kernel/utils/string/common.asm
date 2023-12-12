@@ -31,8 +31,45 @@ str_len:
 print_string:
     pusha
     ;; Get string length
+    mov bh, 0
     call str_len
     mov ax, 1300h
+    mov bp, si
+    int 10h
+    popa
+    ret
+
+;; Prints zero terminated string and move cursor
+;; Parameters: bh    - page number
+;;             bl    - video attribute http://www.techhelpmanual.com/87-screen_attributes.html
+;;             dh,dl - coords to start writing
+;;             si - pointer to string
+;; Returns:    None
+print_string_and_move:
+    pusha
+    mov bh, 0
+    ;; Get string length
+    call str_len
+    mov ax, 1301h
+    mov bp, si
+    int 10h
+    popa
+    ret
+
+;; Print string at cursor position and move cursor at the end of it
+;; Parameters: bh    - page number
+;;             bl    - video attribute http://www.techhelpmanual.com/87-screen_attributes.html
+;;             si - pointer to string
+;; Returns:    None
+print_string_inline:
+    pusha
+    mov bh, 0
+    ;; Get cursor position
+    mov ah, 03H
+    int 10h
+    ;; Get string length
+    call str_len
+    mov ax, 1301h
     mov bp, si
     int 10h
     popa
@@ -64,7 +101,7 @@ repeat_string:
     popa
     ret
 
-    ;; Concatenate a string N times
+;; No idea
 ;; Parameters: cx    - number of bytes to copy
 ;;             es:bp - pointer to string from ram
 ;;             di    - pointer to output string
