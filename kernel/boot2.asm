@@ -11,16 +11,6 @@
 
 section .data
     BOOT_DISK db 0
-    SECTOR_SIZE dw 512
-    menu_selection db 0
-
-    SPACE_STR db " ", 0
-    KEYBOARD_FLOPPY_MSG db "KEYBOARD ==> FLOPPY", 0
-    FLOPPY_RAM_MSG db "FLOPPY ==> RAM", 0
-    RAM_FLOPPY_MSG db "RAM ==> FLOPPY", 0
-    SELECTED_PREFIX db "> ", 0
-    UNSELECTED_PREFIX db "  ", 0
-    MENU_MESSAGES dw KEYBOARD_FLOPPY_MSG, FLOPPY_RAM_MSG, RAM_FLOPPY_MSG
     cursor_coords:
         cursor_x db 0
         cursor_y db 0
@@ -42,19 +32,12 @@ section .data
     HEAD_PROMPT db "Enter head: ", 0
     CYLINDER_PROMPT db "Enter cylinder: ", 0
     SECTOR_PROMPT db "Enter sector: ", 0
-    REPETITIONS_PROMPT db "Enter number of repetitions: ", 0
-    REPETITIONS_BETWEEN_MSG db "Number msut be between 1 and 30_000", 0
-    WAIT_FOR_ENTER_MSG db "Press ENTER to continue", 0
-    WAIT_FOR_ENTER_OR_SPACE_MSG db "Press ENTER to continue or SPACE to load more", 0
-    NUMBER_OF_SECTORS_PROMPT db "Enter number of sectors: ", 0
     RAM_ADDRESS_PROMPT db "Enter RAM address: ", 0
     RAM_OFFSET_PROMPT db "Enter RAM offset: ", 0
-    BYTES_PROMPT db "Enter bytes number: ", 0
 
 section .bss
     buffer resb 257
     floppy_buffer resb 512
-    names_buffer resb 512
     conversion_buffer resb 32
     hex_conversion_buffer resb 64 
     ram_address:
@@ -74,11 +57,11 @@ main:
     call prompt_chs
     call prompt_ram_address
     ;; test data
-    mov byte [cylinder], 2
-    mov byte [head], 1
-    mov byte [sector], 2
-    mov word [ram_address_value], 0x0000
-    mov word [ram_offset], 07f0H
+    ; mov byte [cylinder], 2
+    ; mov byte [head], 1
+    ; mov byte [sector], 2
+    ; mov word [ram_address_value], 7F00H
+    ; mov word [ram_offset], 7F00H
     jmp copy_kernel_to_ram
 
     jmp $ ; infinite loop
@@ -160,22 +143,24 @@ copy_kernel_to_ram:
     mov cl, [sector]
 
     mov bx, [ram_address_value]
-    mov es, [ram_offset]
+    mov ax, [ram_offset]
+    mov es, ax
 
-    mov al, SECTOR_COPY_COUNT
-    mov ah, 0x02 ; read sectors
+    mov ah, 0x02 ; read sectors code
+    mov al, 6
     int 13h
 
     ;; check for errors
     call print_floppy_result
 
-    mov ds, [ram_offset]
-    mov es, [ram_offset]
-    mov ss, [ram_offset]
-    mov sp, [ram_offset]
-
     mov dl, [BOOT_DISK]
-    jmp 0
+    mov ax, [ram_address_value]
+    mov bx, [ram_offset]
+    mov ds, bx
+    mov es, bx
+    mov ss, bx
+    mov sp, bx
+    jmp ax
 
 print_floppy_result:
     push es

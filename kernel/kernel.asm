@@ -1,3 +1,4 @@
+org 7F00H
 %define BACKSPACE 0x08
 %define ENTER 0x0D
 %define ESC 0x1B
@@ -68,7 +69,12 @@ section .text
 
 main:
     mov [BOOT_DISK], dl
-    call insert_initial_floppy_data
+    ; mov ah, 0x0A
+    ; mov al, 'A'
+    ; mov bh, 0
+    ; mov cx, 2
+    ; int 10H
+    ; jmp $
     call menu
     ; mov si, floppy_buffer
     ; mov bh, 0
@@ -161,7 +167,6 @@ print_menu:
 %include "utils/string/common.asm"
 %include "utils/conversion.asm"
 %include "utils/io.asm"
-%include "tasks/initial_floppy_data.asm"
 %include "tasks/keyboard_to_floppy.asm"
 %include "tasks/floppy_to_ram.asm"
 %include "tasks/ram_to_floppy.asm"

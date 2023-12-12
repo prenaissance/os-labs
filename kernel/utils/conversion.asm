@@ -97,3 +97,29 @@ string_to_hex:
 
     atoh_conv_done:
         ret
+
+hex_to_num:
+    xor ax, ax          ; clear ax
+    mov cx, 0           ; clear cx
+    mov bl, [si]        ; get first character
+    cmp bl, 0           ; check for null terminator
+    je done             ; if null, we're done
+    next_digit:
+        shl ax, 4           ; shift left to make room for next digit
+        cmp bl, '0'         ; check for digit
+        jl done             ; if not a digit, we're done
+        sub bl, '0'         ; convert to number
+        cmp bl, 10          ; check for A-F
+        jae upper_case      ; if >= A, convert to uppercase
+        add al, bl          ; add to total
+        jmp get_next        ; get next character
+    upper_case:
+        sub bl, 7           ; convert to uppercase
+        add al, bl          ; add to total
+    get_next:
+        inc si              ; move to next character
+        mov bl, [si]        ; get next character
+        cmp bl, 0           ; check for null terminator
+        jne next_digit      ; if not null, get next digit
+    done:
+        ret

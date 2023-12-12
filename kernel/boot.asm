@@ -25,9 +25,9 @@ start:
 
 kernel_load:
     ; setup es:bx to point to the sector to load to memory
-    mov bx, 7e00H
+    mov bx, 7d00H
     mov es, bx
-    mov bx, 0x0000    
+    mov bx, 0000H 
 
     mov dl, [BOOT_DISK] ; boot from boot drive
     mov ch, 0 ; cylinder
@@ -40,12 +40,6 @@ kernel_load:
 
     jc disk_error ; jump if carry flag is set
 
-    mov ax, 0x7e00
-    mov ds, ax
-    mov es, ax
-    mov ss, ax
-    mov sp, ax
-
 wait_for_enter:
     mov ah, 0
     int 16h
@@ -57,7 +51,12 @@ wait_for_enter:
 
 jump_to_kernel:
     mov dl, [BOOT_DISK]
-    jmp 0x7e00:0x0000
+    mov ax, 7d00H
+    mov ds, ax
+    mov es, ax
+    mov ss, ax
+    mov sp, ax
+    jmp 7d00H:0000H
 
 clear_screen:
     mov ah, 0x00
